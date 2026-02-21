@@ -1,28 +1,30 @@
-# Design Document - SEMRAG v3 Implementation Final
+# Design Document - SEMRAG v5 Implementation Final
 
-## 1. Ontology Loader (RDFLib)
-The `OntologyLoader` parses and ingests enterprise rule sets.
-- **Library**: `rdflib`.
-- **Method**: `load_ontology(url: str, format: str, namespace: str)` parses files and creates class/property nodes.
-- **RDF Importer**: `extract_rdf_triples` directly loads triples into the Graph Store.
+## 1. FastMCP "Streamable HTTP" Server
+The MCP server is implemented using the `fastmcp` framework.
+- **`query_semrag`**: Tool that triggers the LangGraph hybrid retrieval pipeline.
+- **`ingest_url`**: Tool that uses `fsspec` to pull remote documents.
+- **`inspect_graph`**: Resource that provides graph health metrics.
+- **Transport**: Standardized streamable HTTP integrated into the FastAPI application.
 
-## 2. Metadata-Enriched Schema (Pydantic)
-Every graph interaction is governed by a Pydantic model.
-- **`GraphNode`**: `id`, `name`, `type`, `uri`, `provenance`, `confidence`, `namespace`.
-- **`GraphEdge`**: `subject`, `predicate`, `object`, `provenance`, `confidence`, `namespace`.
-- **Enriched Triple**: Combines nodes and edges into a single ingestion unit.
+## 2. Push-to-Ingest (Upload API)
+The upload API enables remote ingestion of local files.
+- **Route**: `POST /v1/ingest/upload`.
+- **Implementation**: Uses `FastAPI.UploadFile` to receive multipart data.
+- **Buffering**: Content is streamed into `ingestion_engine.ingest_stream` without large temporary disk writes where possible.
 
-## 3. Advanced Dashboard (Cytoscape.js)
-The dashboard is a dynamic, interactive visualization served by FastAPI.
-- **Endpoint**: `GET /dashboard` renders the Cytoscape.js frontend.
-- **Data Endpoint**: `GET /dashboard/data` returns graph JSON with metadata.
-- **Features**: Pan, Zoom, Drag, and Metadata detail sidebar on click.
+## 3. Unified Ingestion Engine
+The `IngestionEngine` provides a common interface for all document sources.
+- **`ingest_file`**: Handles local file-system paths.
+- **`ingest_stream`**: Handles `IO[bytes]` objects (e.g., from uploads or memory buffers).
+- **Partitioning**: Both methods utilize `unstructured.partition` for multi-format support (PDF, DOCX, etc.).
 
-## 4. Graph Store Interface Updates
-The `IGraphStore` interface includes new methods for metadata-enriched triples.
-- **`add_enriched_triple`**: Merges nodes and creates relationships with metadata.
-- **`query_by_metadata`**: Filters nodes/edges based on `namespace`, `provenance`, or `confidence`.
+## 4. Modern Lifecycle (uv)
+The project has been migrated to `uv`.
+- **`pyproject.toml`**: Defines project metadata and a flat dependency list.
+- **`uv.lock`**: Ensures reproducible environments across development and production.
+- **Dockerfile**: Replaces `pip install` with `uv sync` for significant build speedups.
 
 ## 5. Deployment manifests
-- **Dockerfile**: Includes system-level dependencies for `unstructured` and `rdflib`.
-- **docker-compose.yaml**: Adds the SEMRAG API service (port 8000).
+- **docker-compose.yaml**: Orchestrates Qdrant, Neo4j/FalkorDB, Redis, and the SEMRAG Unified API (port 8000).
+- **FastMCP Access**: Standardized tool discovery and execution via the `/mcp` sub-path.

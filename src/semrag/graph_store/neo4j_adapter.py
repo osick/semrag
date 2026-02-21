@@ -5,7 +5,7 @@ from semrag.api.models import EnrichedTriple
 
 class Neo4jGraphStore(IGraphStore):
     """
-    Neo4j implementation of the IGraphStore interface with Metadata support.
+    Neo4j implementation of the IGraphStore interface with Analytics support (v4).
     """
     
     def __init__(self, uri: str, user: str, password: str):
@@ -17,9 +17,7 @@ class Neo4jGraphStore(IGraphStore):
             return [record.data() for record in result]
 
     def add_enriched_triple(self, triple: EnrichedTriple) -> None:
-        """
-        Adds a triple with full metadata enrichment to Neo4j.
-        """
+        """Adds a triple with full metadata enrichment."""
         cypher = """
         MERGE (s:Entity {name: $s_name})
         SET s.uri = $s_uri, s.provenance = $s_prov, s.namespace = $s_ns, s.confidence = $s_conf
@@ -39,20 +37,24 @@ class Neo4jGraphStore(IGraphStore):
         with self._driver.session() as session:
             session.run(cypher, **params)
 
-    def add_triples(self, triples: List[Tuple[str, str, str]], provenance: str = "Unknown", namespace: str = "Default") -> None:
-        """Adds simple triples with metadata defaults."""
-        for s, p, o in triples:
-            cypher = f"MERGE (s:Entity {{name: '{s}'}}) SET s.provenance = $prov, s.namespace = $ns " \
-                     f"MERGE (o:Entity {{name: '{o}'}}) SET o.provenance = $prov, o.namespace = $ns " \
-                     f"WITH s, o CALL apoc.merge.relationship(s, '{p}', {{provenance: $prov, namespace: $ns}}, {{}}, o) YIELD rel RETURN count(rel)"
-            with self._driver.session() as session:
-                session.run(cypher, prov=provenance, ns=namespace)
+    def merge_nodes(self, canonical_name: str, alias_name: str) -> None:
+        """
+        Merges an 'alias' node into a 'canonical' node using APOC.
+        Transfers all relationships and properties.
+        """
+        cypher = """
+        MATCH (c:Entity {name: $canonical}), (a:Entity {name: $alias})
+        CALL apoc.refactor.mergeNodes([c, a], {properties: 'overwrite', mergeRels: true}) YIELD node
+        RETURN node
+        """
+        with self._driver.session() as session:
+            session.run(cypher, canonical=canonical_name, alias=alias_name)
 
-    def query_by_metadata(self, filters: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Filters nodes by metadata properties."""
-        where_clause = " AND ".join([f"n.{k} = ${k}" for k in filters.keys()])
-        cypher = f"MATCH (n) WHERE {where_clause} RETURN n"
-        return self.query(cypher, filters)
+    def get_all_triples(self) -> List[Tuple[str, str, str]]:
+        """Retrieves all triples for community detection."""
+        cypher = "MATCH (s)-[r]->(o) RETURN s.name as s, type(r) as p, o.name as o"
+        results = self.query(cypher)
+        return [(r['s'], r['p'], r['o']) for r in results]
 
     def clear(self) -> None:
         with self._driver.session() as session:

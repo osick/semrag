@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
-from src.semrag.api.openai_wrapper import app, graph
-from src.semrag.ingestion.loaders.multi_source_ingestor import MultiSourceIngestor
+from semrag.api.openai_wrapper import app, graph
+from semrag.ingestion.loaders.multi_source_ingestor import MultiSourceIngestor
 
 class TestSEMRAGv2Behavior:
     """
@@ -23,7 +23,7 @@ class TestSEMRAGv2Behavior:
     def mock_ingestion_engine(self):
         return MagicMock()
 
-    @patch("src.semrag.api.openai_wrapper.get_graph")
+    @patch("semrag.api.openai_wrapper.get_graph")
     def test_openai_compatible_chat_completion(self, mock_get_graph, client, mock_graph):
         """
         Behavior: The API should respond to OpenAI-compatible chat requests.

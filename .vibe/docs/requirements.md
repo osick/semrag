@@ -1,37 +1,42 @@
-# Requirements Document
+# Requirements Document - SEMRAG v5
 
 ## Functional Requirements
 
-### 1. Ingestion
-- **Local-First Execution**: The entire stack must run locally (e.g., using Ollama for LLM/Embeddings).
-- **Multi-Format Support**: Support for PDF, Markdown, Plain Text, and Office files (DOCX, XLSX, PPTX).
-- **Semantic Chunking**: Automatic splitting of text based on semantic boundaries rather than fixed characters.
+### 1. Unified Ingestion
+- **Local & Remote Push/Pull**: Support for local file uploads (Push), remote URL ingestion (Pull), and directory scanning.
+- **Multi-Format Support**: Native partitioning for PDF, Markdown, Plain Text, and Office files (DOCX, XLSX, PPTX).
+- **Enterprise Ontology**: Support for loading OWL/RDF/TTL rule sets to drive schema-first graph construction.
 
-### 2. Retrieval & Generation
-- **Hybrid Search**: Combining vector-based similarity search with graph-based relationship traversal.
-- **Entity Extraction**: Automated identification of entities (Nodes) and relationships (Edges) from ingested text using a local LLM.
-- **Context Augmentation**: Retrieval results should include both top-k vector matches and relevant graph-traversed nodes.
+### 2. Intelligent Retrieval
+- **Hybrid Search**: Advanced LangGraph workflow combining vector similarity (Qdrant) and graph-based traversal (Neo4j/FalkorDB).
+- **Metadata-Enriched Extraction**: Automatic extraction of entities and relationships with provenance, confidence, and namespace metadata.
+- **Global Summarization**: Leiden-based community detection for high-level dataset insights.
+
+### 3. Connectivity & Integration
+- **Standardized MCP**: Expose tools via a streamable HTTP Model Context Protocol (MCP) server (FastMCP).
+- **Open WebUI Compatibility**: OpenAI-compatible API for seamless integration with third-party chat interfaces.
+- **Visualization**: Dynamic Cytoscape.js dashboard for knowledge graph exploration.
 
 ## Non-Functional Requirements
 
-### 1. Privacy & Security
-- **Local Isolation**: No data shall be transmitted to external cloud services.
-- **In-Memory/Local Storage**: Persistence must be local to the host machine.
+### 1. Performance & Lifecycle
+- **Ultra-Fast Builds**: Deterministic project management and fast installs via `uv`.
+- **Latency Optimization**: Redis-backed caching for embeddings and retrieval context.
+- **Scalability**: Designed for containerized deployment on Kubernetes.
 
-### 2. Performance
-- **Low Latency**: Search and retrieval should provide response times acceptable for real-time interaction (e.g., < 2s for typical queries).
-- **Scalability**: Capable of handling document collections up to 1GB in size locally.
+### 2. Security & Observability
+- **Local-First or Hybrid**: Flexible deployment allowing for fully local (Ollama) or secure cloud (OpenAI/Anthropic) model usage.
+- **Structured Logging**: JSON-formatted auditing of every retrieval step.
 
 ## Scope
 
 ### In-Scope
-- Core SEMRAG engine (Python 3).
-- Local Vector DB (Qdrant or Chroma).
-- Local Graph DB (FalkorDB or Neo4j).
-- CLI or simple API for interaction.
-- Office document (DOCX, XLSX, PPTX) and PDF ingestion.
+- Core SEMRAG engine with LangGraph orchestration.
+- Standardized FastMCP server.
+- Push-to-Ingest (Upload) and Pull (fsspec) engines.
+- Advanced visualization dashboard.
+- `uv` based lifecycle management.
 
 ### Out-of-Scope
-- Cloud-hosted LLM services (OpenAI, Anthropic).
-- Multi-user authentication.
-- Complex GUI (CLI/Simple API only).
+- Multi-tenant user authentication.
+- Real-time collaborative graph editing.

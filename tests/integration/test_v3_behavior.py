@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.semrag.graph_store.ontology.loader import OntologyLoader
-from src.semrag.orchestration.graph import SEMRAGGraph
+from semrag.graph_store.ontology.loader import OntologyLoader
+from semrag.orchestration.graph import SEMRAGGraph
 
 class TestSEMRAGv3Behavior:
     """

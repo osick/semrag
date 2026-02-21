@@ -1,38 +1,36 @@
-# Architecture Document - SEMRAG v3 Final
+# Architecture Document - SEMRAG v5 Final
 
 ## System Overview
-SEMRAG v3 expands the initial hybrid retrieval with **Enterprise-Grade Graph Intelligence**, including support for ontologies, RDF triple ingestion, and a high-performance interactive dashboard.
+SEMRAG v5 is a state-of-the-art Knowledge Retrieval Augmentation (RAG) platform. It provides a standardized interface for multi-source knowledge ingestion and hybrid retrieval using vector and graph intelligence. V5 focuses on modern developer experience with `uv` and standardized connectivity via `FastMCP`.
 
 ## Core Components
 
-### 1. Ontology & RDF Integration (RDFLib)
-- **Ontology Loader**: Parses OWL, RDF, and TTL to establish a "Schema-First" graph.
-- **RDF Importer**: Directly loads external triples into the Graph Store, mapping identifiers to local entities.
-- **Triple Management**: Handles namespace-qualified entities and relationships via the `IGraphStore`.
+### 1. Model & Package Management (uv)
+- **Tooling**: Uses `uv` for ultra-fast dependency resolution and deterministic project management.
+- **Environment**: Governed by `pyproject.toml` and `uv.lock`.
 
-### 2. Metadata-Enriched Graph Schema (Pydantic)
-- **Nodes & Edges**: Every entity and relationship includes:
-    - `provenance`: Origin of the data (e.g., "Policy Rule Set v1", "document.pdf").
-    - `confidence`: Extraction certainty score (0.0 to 1.0).
-    - `namespace`: Logical domain (e.g., "Legal", "Engineering").
-    - `uri`: Global unique identifier (for RDF-sourced data).
+### 2. Standardized Tool Connectivity (FastMCP)
+- **Framework**: `FastMCP` (via `fastmcp` and `mcp`).
+- **Transport**: Standardized "Streamable HTTP" transport for tool access.
+- **Unified API**: FastMCP is integrated into the main FastAPI application, providing a single entry point for Chat, Dashboard, and Tools.
 
-### 3. Advanced Dashboard (Cytoscape.js)
-- **Backend**: FastAPI endpoint providing a JSON representation of the graph.
-- **Frontend**: A high-performance visualization layer at `/dashboard` using **Cytoscape.js**.
-- **Capabilities**: Zoom, Pan, Drag, and Metadata inspection (Provenance, Namespace, Confidence).
+### 3. Push-to-Ingest Architecture (Upload API)
+- **Pattern**: "Push-to-Ingest" allows clients to upload local files directly to the remote server via a multipart POST request.
+- **Unified Processing**: The `IngestionEngine` handles both file-system paths and in-memory byte streams from uploads.
 
-### 4. Reasoning & Deduction Layer
-- **Metadata-Aware Retrieval**: The LangGraph pipeline uses `namespace` and `provenance` filters to refine the contextual context.
-- **Provenance-Aware Answering**: The context provided to the LLM includes metadata, enabling the model to state its sources and confidence.
+### 4. Hybrid Intelligence (LangGraph)
+- **Workflow**: Stateful LangGraph orchestrator that merges Vector Search (Qdrant) and Graph Traversal (Neo4j/FalkorDB).
+- **Metadata**: Provenance, namespace, and confidence metadata are preserved throughout the retrieval chain.
 
-## Data Flow (v3)
-1.  **Ontology Loading**: `Rule Set (.ttl)` -> `RDFLib` -> `Graph Store` (Schema/Rules established).
-2.  **Document Ingestion**: `Doc` -> `LLM` (constrained by ontology) -> `Graph Store` (Contextual triples added).
-3.  **Visualization**: `FastAPI /dashboard` -> `Cytoscape.js` -> `Interactive UI`.
+### 5. Interactive Visualization (Cytoscape.js)
+- **Interface**: A dynamic, high-performance dashboard available at `/dashboard`.
+- **Data Model**: Visualizes the relationship between document chunks and extracted semantic entities.
 
-## Technology Stack (v3)
-- **Ontology Parser**: RDFLib.
-- **Dashboard UI**: Cytoscape.js.
-- **Metadata Management**: Pydantic.
-- **Retrieval**: LangGraph.
+## Data Flow
+1.  **Ingestion (Push)**: `Client` -> `FastAPI /upload` -> `BytesIO` -> `IngestionEngine` -> `Vector/Graph DB`.
+2.  **Ingestion (Pull)**: `Admin` -> `FastMCP ingest_url` -> `fsspec` -> `IngestionEngine` -> `Vector/Graph DB`.
+3.  **Retrieval**: `Client` -> `FastAPI /chat` OR `FastMCP query_semrag` -> `LangGraph` -> `LiteLLM` -> `Response`.
+
+## Deployment
+- **Containerization**: Optimized Docker builds using `uv sync`.
+- **Services**: Qdrant, Neo4j/FalkorDB, Redis (Cache), and the SEMRAG Unified API.

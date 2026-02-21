@@ -19,3 +19,7 @@ s3fs
 gcsfs
 pyvis
 rdflib
+mcp
+networkx
+cdlib
+structlog

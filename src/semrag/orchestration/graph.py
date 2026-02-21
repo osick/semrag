@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, Any, Union
+from typing import TypedDict, List, Dict, Any, Union, Optional
 from langgraph.graph import StateGraph, END
 from semrag.vector_store.qdrant_wrapper import QdrantVectorStore
 from semrag.graph_store.interface import IGraphStore

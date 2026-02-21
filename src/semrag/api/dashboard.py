@@ -65,12 +65,17 @@ async def get_dashboard_data():
     """
     Returns graph data in Cytoscape-compatible format.
     """
+    if graph_store is None:
+        return JSONResponse(content={"elements": []}, status_code=500)
+    
     # 1. Query for all entities and relationships
     # Note: For production, we would limit the nodes or use pagination.
-    cypher = "MATCH (n)-[r]->(m) RETURN n.name as source_id, type(r) as rel, m.name as target_id, " 
-             "n.provenance as s_prov, n.namespace as s_ns, n.confidence as s_conf, " 
-             "m.provenance as t_prov, m.namespace as t_ns, m.confidence as t_conf, " 
-             "r.provenance as r_prov, r.namespace as r_ns, r.confidence as r_conf LIMIT 500"
+    cypher = (
+        "MATCH (n)-[r]->(m) RETURN n.name as source_id, type(r) as rel, m.name as target_id, " 
+        "n.provenance as s_prov, n.namespace as s_ns, n.confidence as s_conf, " 
+        "m.provenance as t_prov, m.namespace as t_ns, m.confidence as t_conf, " 
+        "r.provenance as r_prov, r.namespace as r_ns, r.confidence as r_conf LIMIT 500"
+    )
     
     results = graph_store.query(cypher)
     

@@ -1,78 +1,55 @@
-# Development Plan: SEMRAG v3 (Enterprise Graph & Advanced Dashboard)
+# Development Plan: SEMRAG v5 (Completed)
 
 *Workflow: [greenfield](https://mrsimpson.github.io/responsible-vibe-mcp/workflows/greenfield)*
 
 ## Goal
-Expand SEMRAG with enterprise ontology support, RDF triple ingestion, and a dynamic, high-performance visualization dashboard integrated into the FastAPI service.
+Migrate to `uv`, implement the standard "Streamable HTTP" MCP server (FastMCP), and build a "Push-to-Ingest" Upload API for local file ingestion.
 
 ## Key Decisions
-- **Ontology Framework**: RDFLib for formal triple management and ontology loading.
-- **Data Model**: Schema-first extraction (pre-loading ontologies/rule sets).
-- **Interface**: FastAPI endpoint for the dashboard (`/dashboard`) using **Cytoscape.js**.
-- **Metadata**: Add structural metadata (provenance, confidence, namespace) to every node/edge.
-- **Ingestion Order**: Graph-first (ontologies) then documents (contextual triples).
+- **Package Manager**: `uv` (replacing pip/requirements.txt).
+- **MCP Framework**: FastMCP (Standard Streamable HTTP transport).
+- **Ingestion Pattern**: Multipart Upload API for local files (`POST /v1/ingest/upload`).
+- **Infrastructure**: Update Dockerfile and CI/CD for `uv`.
 
 ## Ideation
-### Tasks
-- [x] Define the enterprise ontology ingestion strategy (OWL/RDF/TTL).
-- [x] Research Cytoscape.js vs Sigma.js for the `/dashboard` implementation.
-- [x] Design the structural metadata schema for graph nodes and edges.
-- [x] Map out the reasoning/deduction logic based on added metadata.
+### Completed
+- [x] Define the "Push-to-Ingest" Multipart API strategy.
+- [x] Research `uv` project initialization and migration.
+- [x] Map out the FastMCP "Streamable HTTP" server structure.
+- [x] Design the local-to-remote file upload flow.
 
 ## Architecture
-### Phase Entrance Criteria:
-- [x] Ontology and RDF strategy are defined.
-- [x] Dashboard tech stack (Cytoscape/Sigma) is selected.
-- [x] Metadata schema is finalized.
-
-### Tasks
-- [x] Design the `OntologyLoader` for OWL/RDF/TTL file ingestion.
-- [x] Specify the metadata enrichment schema (provenance, confidence, namespace).
-- [x] Design the dynamic `/dashboard` endpoint using **Cytoscape.js**.
-- [x] Specify the Cypher query logic for metadata-based deduction/filtering.
-- [x] Update the Graph Store interface for RDF-compatible triple management.
-- [x] Design the reasoning/deduction layer using the added metadata.
+### Completed
+- [x] Design the `POST /v1/ingest/upload` multipart endpoint.
+- [x] Specify the FastMCP-based HTTP server configuration.
+- [x] Design the `pyproject.toml` for `uv` migration.
+- [x] Update the `IngestionEngine` to support in-memory file streams from uploads.
 
 ## Plan
-### Phase Entrance Criteria:
-- [x] System architecture for ontology-driven RAG is documented.
-- [x] Dashboard UI/UX requirements are finalized.
-
-### Tasks
-- [x] Initialize `requirements.txt` with `rdflib` and `pydantic`.
-- [x] Map out the `src/semrag/graph_store/ontology_loader.py` structure.
-- [x] Design the `src/semrag/api/dashboard_service.py` with the Cytoscape.js frontend.
-- [x] Define the metadata schema (Pydantic models) for nodes and edges.
-- [x] Create the initial "Deduction" test cases for metadata-based retrieval.
-- [x] Define the TDD test cases for ontology-driven triple extraction.
+### Completed
+- [x] Initialize `pyproject.toml` and `uv.lock` for the project.
+- [x] Map out the `src/semrag/mcp/server_fastmcp.py` structure.
+- [x] Design the `POST /v1/ingest/upload` multipart endpoint.
+- [x] Define the `UnifiedIngestor` to handle both streams.
+- [x] Update the `Dockerfile` to use `uv` for builds.
+- [x] Create initial "Push-to-Ingest" behavioral tests.
+- [x] Define TDD test cases for FastMCP.
 
 ## Code
-### Phase Entrance Criteria:
-- [x] Detailed implementation plan for RDF and Advanced Dashboard is finalized.
-
-### Tasks
-- [x] Implement `src/semrag/graph_store/ontology/loader.py` using rdflib.
-- [x] Implement `src/semrag/api/models.py` with Pydantic for metadata.
-- [x] Update `IGraphStore` and adapters for metadata enrichment.
-- [x] Implement `src/semrag/api/dashboard.py` and the Cytoscape.js frontend.
-- [x] Implement metadata-based deduction logic in `SEMRAGGraph`.
-- [x] Create behavioral tests for ontology loading and triple extraction.
-- [x] Verify the system with the new dashboard and RDF integration.
+### Completed
+- [x] Migrated project to `uv` and generated `uv.lock`.
+- [x] Implemented FastMCP server logic.
+- [x] Implemented `POST /v1/ingest/upload` for multipart uploads.
+- [x] Refactored `IngestionEngine` for stream support.
+- [x] Updated Dockerfile for `uv` builds.
+- [x] Created behavioral tests for v5 features.
 
 ## Finalize
-### Phase Entrance Criteria:
-- [x] Ontology-driven ingestion is verified.
-- [x] Dynamic dashboard is functional and navigable.
-- [x] Metadata-based deduction/filtering is working.
-
-### Tasks
-- [x] Finalize Architecture Document (`architecture.md`).
-- [x] Update `README.md` with Ontology, RDF, and Dashboard setup instructions.
-- [x] Create a sample `.ttl` ontology for testing.
-- [x] Run final end-to-end tests for all v3 features.
-- [x] Finalize the dashboard's filtering and navigation frontend logic.
-
 ### Completed
-- [x] Finalized all project documentation and behavioral tests for SEMRAG v3.
-- [x] Created `README.md` with Ontology and Dashboard setup.
-- [x] Verified code quality and cleanup.
+- [x] Finalized Architecture, Requirements, and Design documents for v5.
+- [x] Updated `README.md` with `uv` and v5 specifics.
+- [x] Verified all behavioral integration tests pass.
+- [x] Conducted final code cleanup (no TODOs/debug logs).
+
+---
+*Project v5 finalized and delivered.*

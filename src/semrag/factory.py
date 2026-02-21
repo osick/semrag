@@ -1,5 +1,5 @@
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_community.embeddings import LiteLLMEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from semrag.ingestion.engine import IngestionEngine
 from semrag.orchestration.graph import SEMRAGGraph
 from semrag.graph_store.neo4j_adapter import Neo4jGraphStore
@@ -15,9 +15,9 @@ def create_semrag_stack(
     """
     Factory function to create the complete SEMRAG stack using LiteLLM.
     """
-    # 1. Models (LiteLLM)
+    # 1. Models (LiteLLM for chat, Ollama for embeddings)
     llm = ChatLiteLLM(model=llm_model)
-    embeddings = LiteLLMEmbeddings(model=embed_model)
+    embeddings = OllamaEmbeddings(model=embed_model)
 
     # 2. Databases
     vector_store = QdrantVectorStore(

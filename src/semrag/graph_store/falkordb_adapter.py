@@ -20,7 +20,7 @@ class FalkorDBGraphStore(IGraphStore):
         """
         # Simplistic implementation for initial TDD
         # In a production setting, use a library or properly formatted params.
-        command = f"GRAPH.QUERY {self._graph_id} "{cypher_query}""
+        command = f"GRAPH.QUERY {self._graph_id} '{cypher_query}'"
         result = self._redis.execute_command(command)
         return self._format_result(result)
 
@@ -31,7 +31,7 @@ class FalkorDBGraphStore(IGraphStore):
         """
         for s, p, o in triples:
             cypher = f"MERGE (s:Entity {{name: '{s}'}}) MERGE (o:Entity {{name: '{o}'}}) MERGE (s)-[:{p}]->(o)"
-            command = f"GRAPH.QUERY {self._graph_id} "{cypher}""
+            command = f"GRAPH.QUERY {self._graph_id} '{cypher}'"
             self._redis.execute_command(command)
 
     def _format_result(self, raw_result: List[Any]) -> List[Dict[str, Any]]:
