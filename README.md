@@ -55,6 +55,3 @@ Run the behavioral integration suite for v3 features:
 ```bash
 pytest tests/integration/test_v3_behavior.py
 ```
-
-## License
-MIT
