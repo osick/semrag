@@ -1,0 +1,12 @@
+langchain
+langgraph
+langchain-community
+langchain-ollama
+qdrant-client
+neo4j
+redis
+unstructured[all-docs]
+pytest
+pytest-docker
+python-dotenv
+pydantic
