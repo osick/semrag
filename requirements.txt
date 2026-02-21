@@ -1,7 +1,8 @@
 langchain
 langgraph
 langchain-community
-langchain-ollama
+langchain-openai
+litellm
 qdrant-client
 neo4j
 redis
@@ -10,3 +11,10 @@ pytest
 pytest-docker
 python-dotenv
 pydantic
+fastapi
+uvicorn
+sse-starlette
+fsspec
+s3fs
+gcsfs
+pyvis
