@@ -18,3 +18,4 @@ fsspec
 s3fs
 gcsfs
 pyvis
+rdflib

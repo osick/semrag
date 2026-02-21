@@ -1,32 +1,38 @@
-# Architecture Document - SEMRAG v2 Final
+# Architecture Document - SEMRAG v3 Final
 
 ## System Overview
-The SEMRAG v2 system is a multi-provider, multi-source Knowledge Retrieval Augmentation (RAG) platform. It expands the initial vector-graph hybrid retrieval with **LiteLLM** for model standardization, **fsspec** for broad ingestion, and an **OpenAI-compatible API** for third-party integration (e.g., **Open WebUI**).
+SEMRAG v3 expands the initial hybrid retrieval with **Enterprise-Grade Graph Intelligence**, including support for ontologies, RDF triple ingestion, and a high-performance interactive dashboard.
 
 ## Core Components
 
-### 1. Model Abstraction Layer (LiteLLM)
-- **Role**: Provides a single interface (`ChatLiteLLM`, `LiteLLMEmbeddings`) for 100+ LLM providers.
-- **Dynamic Configuration**: Supports switching between local (Ollama) and cloud (OpenAI, Anthropic) models via environment variables.
+### 1. Ontology & RDF Integration (RDFLib)
+- **Ontology Loader**: Parses OWL, RDF, and TTL to establish a "Schema-First" graph.
+- **RDF Importer**: Directly loads external triples into the Graph Store, mapping identifiers to local entities.
+- **Triple Management**: Handles namespace-qualified entities and relationships via the `IGraphStore`.
 
-### 2. Multi-Source Ingestion Engine (fsspec)
-- **Protocols**: Natively handles `local://`, `s3://`, `http(s)://`, and more.
-- **Recursive Processing**: Scans directories recursively for supported file types (`.pdf`, `.docx`, `.xlsx`, `.pptx`, `.md`).
-- **Unified Logic**: Integrates with the existing `IngestionEngine` to process text chunks and extract semantic links.
+### 2. Metadata-Enriched Graph Schema (Pydantic)
+- **Nodes & Edges**: Every entity and relationship includes:
+    - `provenance`: Origin of the data (e.g., "Policy Rule Set v1", "document.pdf").
+    - `confidence`: Extraction certainty score (0.0 to 1.0).
+    - `namespace`: Logical domain (e.g., "Legal", "Engineering").
+    - `uri`: Global unique identifier (for RDF-sourced data).
 
-### 3. OpenAI-Compatible FastAPI Wrapper
-- **API**: Implements the standard OpenAI `/v1/chat/completions` and `/v1/models` endpoints.
-- **Integration**: Allows OpenAI-compatible clients like **Open WebUI** to use SEMRAG as a backend model.
-- **Orchestration**: Directs incoming chat requests to the **LangGraph** retrieval pipeline.
+### 3. Advanced Dashboard (Cytoscape.js)
+- **Backend**: FastAPI endpoint providing a JSON representation of the graph.
+- **Frontend**: A high-performance visualization layer at `/dashboard` using **Cytoscape.js**.
+- **Capabilities**: Zoom, Pan, Drag, and Metadata inspection (Provenance, Namespace, Confidence).
 
-### 4. Vector-Graph Visualization (Pyvis)
-- **Interface**: Generates an interactive HTML dashboard (`semrag_dashboard.html`).
-- **Data Model**: Displays entity nodes (Graph Store) and document chunks (Vector Store) in a single unified view.
+### 4. Reasoning & Deduction Layer
+- **Metadata-Aware Retrieval**: The LangGraph pipeline uses `namespace` and `provenance` filters to refine the contextual context.
+- **Provenance-Aware Answering**: The context provided to the LLM includes metadata, enabling the model to state its sources and confidence.
 
-## Data Flow
-1.  **Ingestion**: `fsspec` scans source -> `IngestionEngine` chunks & extracts -> `Qdrant` + `Neo4j/FalkorDB`.
-2.  **Query**: `Open WebUI` -> `FastAPI` -> `LangGraph` -> `LiteLLM` (retrieval & generation) -> `Response`.
+## Data Flow (v3)
+1.  **Ontology Loading**: `Rule Set (.ttl)` -> `RDFLib` -> `Graph Store` (Schema/Rules established).
+2.  **Document Ingestion**: `Doc` -> `LLM` (constrained by ontology) -> `Graph Store` (Contextual triples added).
+3.  **Visualization**: `FastAPI /dashboard` -> `Cytoscape.js` -> `Interactive UI`.
 
-## Deployment
-- **Containerization**: Fully Dockerized for local development and Kubernetes deployment.
-- **Services**: Qdrant, Neo4j, FalkorDB, Ollama, and the SEMRAG API.
+## Technology Stack (v3)
+- **Ontology Parser**: RDFLib.
+- **Dashboard UI**: Cytoscape.js.
+- **Metadata Management**: Pydantic.
+- **Retrieval**: LangGraph.

@@ -1,114 +1,59 @@
-# SEMRAG v2: Enterprise-Ready Semantic RAG
+# SEMRAG v3: Enterprise-Grade Graph Intelligence
 
-A high-performance, local-first Semantic Retrieval-Augmented Generation (SEMRAG) platform. It integrates unstructured vector similarity (Qdrant) with structured graph-based relationships (Neo4j/FalkorDB), utilizing **LiteLLM** for multi-provider model orchestration.
+A high-performance Semantic Retrieval-Augmented Generation (SEMRAG) platform with support for enterprise ontologies, RDF integration, and metadata-enriched graph reasoning.
 
-## Features
-- **LiteLLM Integration**: Single entry point for 100+ LLM and Embedding providers (OpenAI, Ollama, Anthropic, Bedrock, etc.).
-- **Hybrid Retrieval**: Stateful LangGraph workflow blending Vector and Graph contexts.
-- **Multi-Source Ingestion**: Recursive loading from Local, S3, HTTP, and more via `fsspec`.
-- **OpenAI-Compatible API**: Seamless integration with **Open WebUI** via a standard FastAPI wrapper.
-- **Semantic Visualization**: Interactive Pyvis-based dashboards for mapping the vector-graph knowledge base.
+## New Features (v3)
+- **Enterprise Ontology Support**: Ingest OWL, RDF, and TTL rule sets to establish a schema-first knowledge graph.
+- **Metadata Enrichment**: Track `provenance`, `confidence`, and `namespace` for every node and relationship.
+- **Advanced Dashboard**: Dynamic, interactive graph visualization using **Cytoscape.js** (Port 8000/dashboard).
+- **Metadata-Aware Retrieval**: Use metadata filters to refine context and perform deduction-based answering.
 
----
+## Getting Started
 
-## 1. Installation & Configuration
-
-### Prerequisites
-- **Docker & Docker Compose**
-- **Python 3.12+**
-- **Ollama** (optional, for fully local execution)
-
-### Step-by-Step Setup
-1. **Clone and Initialize Environment**:
-   ```bash
-   git clone <repository_url>
-   cd semrag
-   cp .env.example .env  # If provided, or create manually
-   ```
-
-2. **Configure Models and Backends (`.env`)**:
-   Edit your `.env` file to select your models and database backends:
-   ```bash
-   # LLM & Embeddings (LiteLLM Syntax)
-   LLM_MODEL=ollama/llama3
-   EMBED_MODEL=ollama/nomic-embed-text
-   
-   # Graph Database Selection (neo4j OR falkordb)
-   GRAPH_DB_TYPE=falkordb
-   
-   # Database Credentials
-   QDRANT_HOST=localhost
-   NEO4J_PASSWORD=password
-   OLLAMA_BASE_URL=http://localhost:11434
-   ```
-
-3. **Start Infrastructure**:
-   ```bash
-   docker-compose up -d
-   ```
-   This initializes Qdrant, your selected Graph DB, and the SEMRAG API.
-
-4. **Install Python Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
----
-
-## 2. Usage with Open WebUI
-
-SEMRAG v2 exposes an OpenAI-compatible API, allowing it to function as an "External Model" in Open WebUI.
-
-1. **Verify API Status**:
-   Ensure the `semrag-api` service is running (Port 8000).
-2. **Configure Open WebUI**:
-   - Navigate to **Settings > Connections > OpenAI API**.
-   - Click **+** to add a new connection.
-   - **API Base URL**: `http://localhost:8000/v1`
-   - **API Key**: `semrag-key` (any non-empty string).
-3. **Chatting**:
-   Select the `semrag-v2` model from the model dropdown. Your queries will now trigger the Hybrid Vector-Graph retrieval pipeline.
-
----
-
-## 3. Visualization Dashboard
-
-The system includes a `VisualizationEngine` to render your knowledge base as an interactive HTML graph.
-
-### Generating the Dashboard
-Use the following snippet to generate the `semrag_dashboard.html`:
-
-```python
-from semrag.factory import create_semrag_stack
-from semrag.visualization.engine import VisualizationEngine
-
-# 1. Initialize Stack
-_, graph_orchestrator = create_semrag_stack()
-
-# 2. Extract Data (Example)
-# In a real scenario, you'd pull data from your DB adapters
-sample_triples = [("Apple", "FOUNDED_BY", "Steve Jobs")]
-sample_chunks = [{"content": "Steve Jobs founded Apple in Cupertino.", "source": "history.pdf"}]
-
-# 3. Render
-viz = VisualizationEngine(output_path="semrag_dashboard.html")
-viz.add_graph_data(sample_triples)
-viz.add_vector_data(sample_chunks)
-viz.generate()
+### 1. Setup Environment
+Initialize the local database services using Docker Compose:
+```bash
+docker-compose up -d
 ```
 
-### Viewing
-Open `semrag_dashboard.html` in any modern web browser. 
-- **Blue Nodes**: Entities and relationships from the Graph Store.
-- **Red Nodes**: Semantic text chunks from the Vector Store.
-- **Interactivity**: Zoom, drag nodes, and hover to view full text or metadata.
+### 2. Configure Models and Databases
+Ensure your `.env` file is set up for your chosen LLM and Graph DB (Neo4j/FalkorDB).
 
----
+### 3. Usage
+
+**Loading an Enterprise Ontology:**
+```python
+from semrag.graph_store.ontology.loader import OntologyLoader
+from semrag.factory import create_semrag_stack
+
+_, graph_orchestrator = create_semrag_stack()
+loader = OntologyLoader(graph_orchestrator._graph_store)
+
+# Load enterprise rule set
+loader.load_ontology("data/legal_schema.ttl", format="turtle", namespace="Legal")
+```
+
+**Metadata-Aware Querying:**
+```python
+# Query with a namespace filter for legal deduction
+result = graph_orchestrator.run("What rules govern Contract_A?", namespace_filter="Legal")
+print(result["answer"])
+```
+
+**Advanced Dashboard:**
+1. Start the API: `docker-compose up semrag-api`
+2. Open your browser to `http://localhost:8000/dashboard`.
+3. Interact with the graph: Zoom, Pan, and Click nodes to see metadata (Provenance, Namespace, Confidence).
+
+## Project Structure
+- `src/semrag/graph_store/ontology/`: Ontology and RDF loading logic.
+- `src/semrag/api/dashboard.py`: FastAPI endpoints for the Cytoscape.js dashboard.
+- `src/semrag/api/models.py`: Pydantic models for metadata-enriched entities.
 
 ## Testing
-Execute the behavioral integration suite to verify the end-to-end v2 loops:
+Run the behavioral integration suite for v3 features:
 ```bash
-pytest tests/integration/test_v2_behavior.py
+pytest tests/integration/test_v3_behavior.py
 ```
 
 ## License
