@@ -1,6 +1,6 @@
 import os
 import io
-from typing import List, Dict, Any, Tuple, Union, IO
+from typing import List, Dict, Any, Tuple, Union, IO, Optional
 from unstructured.partition.auto import partition
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
@@ -10,15 +10,19 @@ from semrag.vector_store.qdrant_wrapper import QdrantVectorStore
 
 class IngestionEngine:
     """
-    Unified engine for multi-format document ingestion (v5).
+    Unified engine for multi-format document ingestion (v6).
     Supports local files, remote URLs, and in-memory streams.
+    Supports pluggable extraction strategies: LLM, NLP (spaCy+GLiNER), adaptive, or tri-graph.
     """
-    
-    def __init__(self, graph_store: IGraphStore, vector_store: QdrantVectorStore, embedding_model: Any, llm: Any = None):
+
+    def __init__(self, graph_store: IGraphStore, vector_store: QdrantVectorStore, embedding_model: Any,
+                 llm: Any = None, extractor=None, trigraph_builder=None):
         self._graph_store = graph_store
         self._vector_store = vector_store
         self._embedding_model = embedding_model
         self._llm = llm
+        self._extractor = extractor  # ITripleExtractor: NLPExtractor, AdaptiveRouter, LLMExtractor, or None
+        self._trigraph_builder = trigraph_builder  # TriGraphBuilder or None
         self._text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -42,21 +46,29 @@ class IngestionEngine:
         self._process_text(text, doc_name=file_name)
 
     def _process_text(self, text: str, doc_name: str) -> None:
-        """Core logic for chunking, embedding, and triple extraction."""
+        """Core logic for chunking, embedding, and triple/graph extraction."""
         # 1. Chunking
         chunks = self._text_splitter.split_text(text)
-        
+
         # 2. Embedding & Vector Storage
         embeddings = self._embedding_model.embed_documents(chunks)
         metadata = [{"source": doc_name} for _ in chunks]
         self._vector_store.add_chunks(chunks, embeddings, metadata)
 
-        # 3. Entity & Relationship Extraction (Graph Store)
-        if self._llm:
+        # 3. Entity & Relationship Extraction (Strategy pattern)
+        if self._extractor:
+            triples = self._extractor.extract_triples(text, doc_name)
+            if triples:
+                self._graph_store.add_triples(triples, provenance=doc_name)
+        elif self._llm:
+            # Backward-compatible fallback: LLM-based extraction
             triples = self._extract_triples_with_llm(text)
             if triples:
-                # v5: Standardized triple addition
                 self._graph_store.add_triples(triples, provenance=doc_name)
+
+        # 4. Tri-Graph Construction (optional, parallel to triple extraction)
+        if self._trigraph_builder:
+            self._trigraph_builder.build_tri_graph(text, doc_name)
 
     def _extract_triples_with_llm(self, text: str) -> List[Tuple[str, str, str]]:
         """Uses an LLM to extract (subject, predicate, object) triples."""
