@@ -19,9 +19,17 @@ class TestIngestionBehavior:
 
     @pytest.fixture
     def mock_llm(self):
-        # Mock LLM to return a triple response
+        # Mock LLM to return a JSON list of triples
         llm = MagicMock()
-        llm.invoke.return_value = "Apple Inc., FOUNDED_BY, Steve Jobs\nSteve Jobs, BORN_IN, San Francisco"
+        # Ensure it returns something that looks like an AIMessage if needed, 
+        # or just a string if the parser handles it.
+        # Most LangChain parsers expect an AIMessage or a string.
+        json_response = '[{"subject": "Apple Inc.", "predicate": "FOUNDED_BY", "object": "Steve Jobs"}, {"subject": "Steve Jobs", "predicate": "BORN_IN", "object": "San Francisco"}]'
+        
+        # We need to simulate the .content attribute or the direct return
+        mock_response = MagicMock()
+        mock_response.content = json_response
+        llm.invoke.return_value = mock_response
         return llm
 
     @pytest.fixture
@@ -52,7 +60,9 @@ class TestIngestionBehavior:
         
         # When: A sample DOCX file is ingested (mocked)
         with patch("os.path.exists", return_value=True):
-            engine.ingest_file("sample.docx")
+            with patch.object(engine, "_extract_triples_with_llm") as mock_extract:
+                mock_extract.return_value = [("Apple Inc.", "FOUNDED_BY", "Steve Jobs"), ("Steve Jobs", "BORN_IN", "San Francisco")]
+                engine.ingest_file("sample.docx")
 
         # Then: 'partition' was called with the correct file
         mock_partition.assert_called_once_with(filename="sample.docx")

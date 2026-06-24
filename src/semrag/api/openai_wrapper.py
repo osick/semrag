@@ -32,22 +32,27 @@ async def lifespan(app: FastAPI):
     embed_model = os.getenv("EMBED_MODEL", "ollama/nomic-embed-text")
     graph_db_type = os.getenv("GRAPH_DB_TYPE", "falkordb")
     
-    ingestion_engine, graph_orchestrator = create_semrag_stack(
-        llm_model=llm_model,
-        embed_model=embed_model,
-        graph_db_type=graph_db_type
-    )
+    try:
+        ingestion_engine, graph_orchestrator = create_semrag_stack(
+            llm_model=llm_model,
+            embed_model=embed_model,
+            graph_db_type=graph_db_type
+        )
+        
+        # 2. Inject dependencies into API modules
+        graph = graph_orchestrator
+        ingestion.ingestion_engine = ingestion_engine
+        dashboard.graph_store = graph_orchestrator._graph_store
+        
+        # 3. Inject dependencies into MCP module
+        server_fastmcp.graph_orchestrator = graph_orchestrator
+        server_fastmcp.ingestion_engine = ingestion_engine
+        
+        print(f"SEMRAG v5 initialized with model: {llm_model}")
+    except Exception as e:
+        print(f"CRITICAL: Failed to initialize SEMRAG stack: {e}")
+        print("The API will start but retrieval/ingestion will fail until databases are reachable.")
     
-    # 2. Inject dependencies into API modules
-    graph = graph_orchestrator
-    ingestion.ingestion_engine = ingestion_engine
-    dashboard.graph_store = graph_orchestrator._graph_store
-    
-    # 3. Inject dependencies into MCP module
-    server_fastmcp.graph_orchestrator = graph_orchestrator
-    server_fastmcp.ingestion_engine = ingestion_engine
-    
-    print(f"SEMRAG v5 initialized with model: {llm_model}")
     yield
     # Cleanup logic (if any) goes here
 

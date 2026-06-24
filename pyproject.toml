@@ -33,6 +33,8 @@ dependencies = [
     "fastmcp",
     "networkx",
     "cdlib",
+    "python-igraph",
+    "leidenalg",
     "structlog",
     "jellyfish",
     "python-multipart",
